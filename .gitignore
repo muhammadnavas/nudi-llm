@@ -1,0 +1,28 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual Environments
+venv/
+env/
+.env
+
+# Datasets and Processed files
+# (GitHub has file size limits, so we exclude the huge text and binary files)
+data/
+*.npy
+
+# Model Checkpoints
+# (These are 50MB+ each, usually kept local or uploaded to Hugging Face instead of GitHub)
+checkpoints/
+*.pt
+
+# Logs and Outputs
+logs/
+generated.txt
+
+# IDEs
+.vscode/
+.idea/
+*.swp

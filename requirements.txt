@@ -1,0 +1,8 @@
+torch>=2.3.0
+sentencepiece>=0.2.0
+datasets>=2.20.0
+requests>=2.31.0
+tqdm>=4.66.0
+numpy>=1.26.0
+matplotlib>=3.9.0
+indic-nlp-library>=0.9

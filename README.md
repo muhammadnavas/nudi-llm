@@ -1,4 +1,4 @@
-# 🇮🇳 NudiLLM — Mini Kannada Language Model
+# NudiLLM — Mini Kannada Language Model
 
 A **mini GPT-style language model** trained on Kannada text, built from scratch.
 ~20 million parameters, runs on a GTX 1650 (4GB VRAM).

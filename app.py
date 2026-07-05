@@ -67,14 +67,17 @@ async def generate(req: GenerateRequest):
         raise HTTPException(status_code=400, detail="No prompt provided.")
         
     try:
+        # Format prompt for Nudi v1 (Instruction Fine-Tuned)
+        formatted_prompt = f"<|user|>\n{req.prompt}\n<|ai|>\n"
+        
         # Generate text using our existing function
         generated_text = generate_text(
             model=MODEL,
             sp=TOKENIZER,
-            prompt=req.prompt,
+            prompt=formatted_prompt,
             device=DEVICE,
             max_new_tokens=150,
-            temperature=0.8,
+            temperature=0.3,
             top_k=50,
             top_p=0.9
         )

@@ -48,18 +48,30 @@ python tokenizer/train_tokenizer.py
 python train.py
 ```
 
-### Step 5: Generate Kannada text
+### Step 5: Web UI (ChatGPT-Style)
 ```bash
-# Interactive mode
-python inference.py
+python app.py
+```
+*Open `http://localhost:5000` in your browser.*
 
-# Single prompt
+### Step 6: Generate Kannada text (CLI)
+```bash
 python inference.py --prompt "ಕನ್ನಡ ಭಾಷೆ"
 ```
 
-### Step 6: Plot training loss
+---
+
+## 🧬 Model Versions
+
+### NudiLLM v0 (Base Model)
+Trained from scratch on raw Kannada Wikipedia text to predict the next word. It understands Kannada grammar and facts but acts like an autocomplete engine.
+
+### NudiLLM v1 (Instruct Fine-Tuned)
+Fine-tuned on a Q&A dataset (`instruct_kannada.json`) to act as a conversational assistant. Learns to wrap inputs in `<|user|>` and `<|ai|>` tokens and responds directly to questions instead of trailing off.
+
+*To train v1 from v0:*
 ```bash
-python plot_loss.py
+python finetune.py
 ```
 
 ---

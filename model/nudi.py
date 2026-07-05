@@ -253,16 +253,18 @@ class NudiLLM(nn.Module):
         temperature: float = 0.8,
         top_k: int = 50,
         top_p: float = 0.9,
+        repetition_penalty: float = 1.3,
     ) -> torch.Tensor:
         """
         Autoregressive text generation with temperature + top-k + top-p sampling.
         
         Args:
-            input_ids:      (1, T) starting token ids
-            max_new_tokens: how many new tokens to generate
-            temperature:    controls randomness (lower = more deterministic)
-            top_k:          keep only top-k logits
-            top_p:          nucleus sampling (keep tokens summing to top_p probability)
+            input_ids:          (1, T) starting token ids
+            max_new_tokens:     how many new tokens to generate
+            temperature:        controls randomness (lower = more deterministic)
+            top_k:              keep only top-k logits
+            top_p:              nucleus sampling (keep tokens summing to top_p probability)
+            repetition_penalty: >1.0 penalises already-seen tokens (reduces looping)
         """
         self.eval()
         for _ in range(max_new_tokens):
@@ -271,6 +273,14 @@ class NudiLLM(nn.Module):
 
             logits, _ = self(ctx)
             logits = logits[:, -1, :]  # Take last token logits: (1, vocab_size)
+
+            # Repetition penalty — divide logits of seen tokens to make them less likely
+            if repetition_penalty != 1.0:
+                for token_id in set(input_ids[0].tolist()):
+                    if logits[0, token_id] > 0:
+                        logits[0, token_id] /= repetition_penalty
+                    else:
+                        logits[0, token_id] *= repetition_penalty
 
             # Apply temperature
             logits = logits / temperature

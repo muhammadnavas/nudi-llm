@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NudiLLM - Kannada AI</title>
+    <meta name="description" content="NudiLLM - A 13.8M parameter Kannada language model. Chat in Kannada with a locally trained AI.">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <!-- Initial Loader -->
+    <div id="loader-wrapper">
+        <div id="wifi-loader">
+            <svg class="circle-outer" viewBox="0 0 86 86">
+                <circle class="back" cx="43" cy="43" r="40"></circle>
+                <circle class="front" cx="43" cy="43" r="40"></circle>
+                <circle class="new" cx="43" cy="43" r="40"></circle>
+            </svg>
+            <svg class="circle-middle" viewBox="0 0 60 60">
+                <circle class="back" cx="30" cy="30" r="27"></circle>
+                <circle class="front" cx="30" cy="30" r="27"></circle>
+            </svg>
+            <svg class="circle-inner" viewBox="0 0 34 34">
+                <circle class="back" cx="17" cy="17" r="14"></circle>
+                <circle class="front" cx="17" cy="17" r="14"></circle>
+            </svg>
+            <div class="text" data-text="Welcome to NudiLLM"></div>
+        </div>
+    </div>
+
+    <!-- ColorBends Background -->
+    <div id="color-bends-container"></div>
+
+    <!-- App Shell -->
+    <div class="app-shell">
+
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-top">
+                <!-- Static logo matching the loader -->
+                <div class="sidebar-logo">
+                    <svg class="nudi-logo-svg" width="36" height="36" viewBox="0 0 86 86" fill="none">
+                        <circle cx="43" cy="43" r="40" stroke="rgba(255,255,255,0.12)" stroke-width="6" stroke-dasharray="62.75 188.25" stroke-linecap="round" transform="rotate(-100 43 43)"/>
+                        <circle cx="43" cy="43" r="40" stroke="#8b5cf6" stroke-width="6" stroke-dasharray="62.75 188.25" stroke-linecap="round" transform="rotate(-100 43 43)"/>
+                        <circle cx="43" cy="43" r="27" stroke="rgba(255,255,255,0.10)" stroke-width="6" stroke-dasharray="42.5 127.5" stroke-linecap="round" transform="rotate(-100 43 43)"/>
+                        <circle cx="43" cy="43" r="27" stroke="#8b5cf6" stroke-width="6" stroke-dasharray="42.5 127.5" stroke-linecap="round" transform="rotate(-100 43 43)"/>
+                        <circle cx="43" cy="43" r="14" stroke="rgba(255,255,255,0.10)" stroke-width="6" stroke-dasharray="22 66" stroke-linecap="round" transform="rotate(-100 43 43)"/>
+                        <circle cx="43" cy="43" r="14" stroke="#8b5cf6" stroke-width="6" stroke-dasharray="22 66" stroke-linecap="round" transform="rotate(-100 43 43)"/>
+                    </svg>
+                    <span class="sidebar-logo-name">NudiLLM</span>
+                </div>
+
+                <button class="new-chat-btn" id="new-chat-btn">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="12" y1="5" x2="12" y2="19"></line>
+                        <line x1="5" y1="12" x2="19" y2="12"></line>
+                    </svg>
+                    New chat
+                </button>
+            </div>
+
+            <div class="sidebar-history">
+                <p class="history-label">Today</p>
+                <div class="history-item active">ಕನ್ನಡ ಭಾಷೆ...</div>
+            </div>
+
+            <div class="sidebar-bottom">
+                <div class="model-badge">
+                    <span class="model-dot"></span>
+                    <span>NudiLLM · 13.8M params</span>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+
+            <!-- Top bar -->
+            <header class="topbar">
+                <div class="topbar-model">
+                    <svg class="nudi-logo-svg" width="22" height="22" viewBox="0 0 86 86" fill="none">
+                        <circle cx="43" cy="43" r="40" stroke="rgba(255,255,255,0.15)" stroke-width="7" stroke-dasharray="62.75 188.25" stroke-linecap="round" transform="rotate(-100 43 43)"/>
+                        <circle cx="43" cy="43" r="40" stroke="#8b5cf6" stroke-width="7" stroke-dasharray="62.75 188.25" stroke-linecap="round" transform="rotate(-100 43 43)"/>
+                        <circle cx="43" cy="43" r="27" stroke="rgba(255,255,255,0.10)" stroke-width="7" stroke-dasharray="42.5 127.5" stroke-linecap="round" transform="rotate(-100 43 43)"/>
+                        <circle cx="43" cy="43" r="27" stroke="#8b5cf6" stroke-width="7" stroke-dasharray="42.5 127.5" stroke-linecap="round" transform="rotate(-100 43 43)"/>
+                        <circle cx="43" cy="43" r="14" stroke="rgba(255,255,255,0.10)" stroke-width="7" stroke-dasharray="22 66" stroke-linecap="round" transform="rotate(-100 43 43)"/>
+                        <circle cx="43" cy="43" r="14" stroke="#8b5cf6" stroke-width="7" stroke-dasharray="22 66" stroke-linecap="round" transform="rotate(-100 43 43)"/>
+                    </svg>
+                    NudiLLM
+                    <svg class="chevron" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                        <polyline points="6 9 12 15 18 9"></polyline>
+                    </svg>
+                </div>
+            </header>
+
+            <!-- Messages -->
+            <div class="messages-wrapper" id="chat-history">
+                <!-- Welcome state -->
+                <div class="welcome-state" id="welcome-state">
+                    <div class="welcome-icon">
+                        <svg width="52" height="52" viewBox="0 0 86 86" fill="none">
+                            <circle cx="43" cy="43" r="40" stroke="rgba(255,255,255,0.12)" stroke-width="6" stroke-dasharray="62.75 188.25" stroke-linecap="round" transform="rotate(-100 43 43)"/>
+                            <circle cx="43" cy="43" r="40" stroke="#8b5cf6" stroke-width="6" stroke-dasharray="62.75 188.25" stroke-linecap="round" transform="rotate(-100 43 43)"/>
+                            <circle cx="43" cy="43" r="27" stroke="rgba(255,255,255,0.10)" stroke-width="6" stroke-dasharray="42.5 127.5" stroke-linecap="round" transform="rotate(-100 43 43)"/>
+                            <circle cx="43" cy="43" r="27" stroke="#8b5cf6" stroke-width="6" stroke-dasharray="42.5 127.5" stroke-linecap="round" transform="rotate(-100 43 43)"/>
+                            <circle cx="43" cy="43" r="14" stroke="rgba(255,255,255,0.10)" stroke-width="6" stroke-dasharray="22 66" stroke-linecap="round" transform="rotate(-100 43 43)"/>
+                            <circle cx="43" cy="43" r="14" stroke="#8b5cf6" stroke-width="6" stroke-dasharray="22 66" stroke-linecap="round" transform="rotate(-100 43 43)"/>
+                        </svg>
+                    </div>
+                    <h2>How can I help you?</h2>
+                    <p>Type a prompt in Kannada to get started</p>
+                    <div class="suggestion-chips">
+                        <button class="chip" data-prompt="ಕನ್ನಡ ಭಾಷೆಯ ಬಗ್ಗೆ ಹೇಳಿ">ಕನ್ನಡ ಭಾಷೆ</button>
+                        <button class="chip" data-prompt="ಒಂದು ಕತೆ ಹೇಳಿ">ಒಂದು ಕತೆ</button>
+                        <button class="chip" data-prompt="ಕರ್ನಾಟಕದ ಇತಿಹಾಸ">ಇತಿಹಾಸ</button>
+                        <button class="chip" data-prompt="ಹಾಡು ಬರೆ">ಹಾಡು</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Input Area -->
+            <div class="input-dock">
+                <div class="input-box">
+                    <textarea id="prompt-input" placeholder="Message NudiLLM... (ಕನ್ನಡದಲ್ಲಿ ಟೈಪ್ ಮಾಡಿ)" rows="1"></textarea>
+                    <button type="submit" id="send-btn" form="chat-form" disabled>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
+                        </svg>
+                    </button>
+                </div>
+                <form id="chat-form" style="display:none"></form>
+                <p class="input-disclaimer">NudiLLM may produce inaccurate information. Running locally on CPU.</p>
+            </div>
+
+        </main>
+    </div>
+
+    <!-- Three.js and ColorBends for background effect -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="/static/ColorBends.js"></script>
+    <script src="/static/script.js"></script>
+</body>
+</html>

@@ -97,4 +97,5 @@ async def generate(req: GenerateRequest):
         raise HTTPException(status_code=500, detail=str(e))
 
 if __name__ == '__main__':
-    uvicorn.run("app:app", host="0.0.0.0", port=5000, reload=False)
+    port = int(os.environ.get("PORT", 7860))
+    uvicorn.run("app:app", host="0.0.0.0", port=port, reload=False)

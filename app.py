@@ -56,7 +56,7 @@ async def startup_event():
 # Serve the HTML frontend
 @app.get("/")
 async def home(request: Request):
-    return templates.TemplateResponse("index.html", {"request": request})
+    return templates.TemplateResponse(request=request, name="index.html", context={"request": request})
 
 # Pydantic model for incoming JSON request
 class GenerateRequest(BaseModel):

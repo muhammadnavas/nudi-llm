@@ -15,8 +15,10 @@ data/
 
 # Model Checkpoints
 # (These are 50MB+ each, usually kept local or uploaded to Hugging Face instead of GitHub)
-checkpoints/
+checkpoints/*
 *.pt
+!checkpoints/best.pt
+!checkpoints/nudi_v0_best.pt
 
 # Logs and Outputs
 logs/

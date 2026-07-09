@@ -121,6 +121,14 @@
 
             <!-- Input Area -->
             <div class="input-dock">
+                <div class="input-options" style="margin-bottom: 10px; text-align: center; color: #a1a1aa; font-size: 12px; display: flex; justify-content: center; gap: 15px;">
+                    <label style="cursor: pointer; display: flex; align-items: center; gap: 5px;" title="Treats input as a question/instruction (adds <|user|> tags)">
+                        <input type="radio" name="prompt_mode" value="chat" checked> Chat Mode
+                    </label>
+                    <label style="cursor: pointer; display: flex; align-items: center; gap: 5px;" title="Continues the text naturally using base pre-training knowledge">
+                        <input type="radio" name="prompt_mode" value="completion"> Autocomplete Mode
+                    </label>
+                </div>
                 <div class="input-box">
                     <textarea id="prompt-input" placeholder="Message NudiLLM... (ಕನ್ನಡದಲ್ಲಿ ಟೈಪ್ ಮಾಡಿ)" rows="1"></textarea>
                     <button type="submit" id="send-btn" form="chat-form" disabled>

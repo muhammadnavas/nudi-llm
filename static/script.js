@@ -82,10 +82,11 @@ document.addEventListener('DOMContentLoaded', () => {
         const loadingId = appendAILoading();
 
         try {
+            const useChatFormat = document.querySelector('input[name="prompt_mode"]:checked').value === 'chat';
             const res = await fetch('/api/generate', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ prompt })
+                body: JSON.stringify({ prompt, use_chat_format: useChatFormat })
             });
             const data = await res.json();
 

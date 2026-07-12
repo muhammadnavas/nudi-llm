@@ -123,7 +123,7 @@ NudiLLM/
 ## 📊 Expected Results
 
 After training on Kannada Wikipedia:
-- **Perplexity**: ~15–30 (good for a 14M model)
+- **Perplexity**: ~63 (val loss ≈ 4.14 at step 46,500 → e^4.14 ≈ 63)
 - **Capability**: Continues Kannada text coherently
 - **Quality**: Similar to early GPT-1 (2018) for Kannada
 

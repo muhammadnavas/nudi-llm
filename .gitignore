@@ -22,6 +22,7 @@ checkpoints/*
 
 # Logs and Outputs
 logs/
+!logs/loss_plot.png
 generated.txt
 
 # IDEs

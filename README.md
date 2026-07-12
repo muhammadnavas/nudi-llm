@@ -1,7 +1,7 @@
 # NudiLLM — Mini Kannada Language Model
 
 A **mini GPT-style language model** trained on Kannada text, built from scratch.
-~20 million parameters, runs on a GTX 1650 (4GB VRAM).
+~14 million parameters, runs on a GTX 1650 (4GB VRAM).
 
 ---
 
@@ -10,7 +10,7 @@ A **mini GPT-style language model** trained on Kannada text, built from scratch.
 | Component | Value |
 |---|---|
 | Model type | Decoder-only Transformer (GPT-2 style) |
-| Parameters | ~20 Million |
+| Parameters | ~14 Million |
 | Layers | 6 Transformer blocks |
 | Attention heads | 6 |
 | Embedding dim | 384 |
@@ -123,7 +123,7 @@ NudiLLM/
 ## 📊 Expected Results
 
 After training on Kannada Wikipedia:
-- **Perplexity**: ~15–30 (good for a 20M model)
+- **Perplexity**: ~15–30 (good for a 14M model)
 - **Capability**: Continues Kannada text coherently
 - **Quality**: Similar to early GPT-1 (2018) for Kannada
 

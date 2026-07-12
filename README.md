@@ -127,6 +127,10 @@ After training on Kannada Wikipedia:
 - **Capability**: Continues Kannada text coherently
 - **Quality**: Similar to early GPT-1 (2018) for Kannada
 
+### 📉 Training Loss Curve
+
+![Training and Validation Loss](logs/loss_plot.png)
+
 ---
 
 ## 🔧 Troubleshooting

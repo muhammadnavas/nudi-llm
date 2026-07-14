@@ -43,6 +43,12 @@ class CausalSelfAttention(nn.Module):
     Multi-head causal (masked) self-attention.
     'Causal' = each token can only attend to previous tokens (left-to-right).
     This is the core of a GPT-style language model.
+
+    Uses PyTorch Flash Attention (F.scaled_dot_product_attention) which:
+      - Never materialises the full T×T attention matrix
+      - Saves ~300-500MB VRAM vs manual attention
+      - Handles the causal mask internally via is_causal=True
+      - Works on GTX 1650 via the math fallback (PyTorch 2.0+)
     """
 
     def __init__(self, config: NudiConfig):
@@ -60,16 +66,8 @@ class CausalSelfAttention(nn.Module):
         # Output projection
         self.c_proj = nn.Linear(config.n_embd, config.n_embd, bias=False)
 
-        self.attn_dropout = nn.Dropout(config.dropout)
         self.resid_dropout = nn.Dropout(config.dropout)
-
-        # Causal mask: lower-triangular matrix (prevents attending to future)
-        # Shape: (1, 1, context_length, context_length)
-        self.register_buffer(
-            "causal_mask",
-            torch.tril(torch.ones(config.context_length, config.context_length))
-            .view(1, 1, config.context_length, config.context_length),
-        )
+        # Note: attn_dropout is passed directly to scaled_dot_product_attention
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         B, T, C = x.size()  # Batch, Sequence length, Channels (n_embd)
@@ -82,20 +80,15 @@ class CausalSelfAttention(nn.Module):
         k = k.view(B, T, self.n_heads, self.head_dim).transpose(1, 2)
         v = v.view(B, T, self.n_heads, self.head_dim).transpose(1, 2)
 
-        # Scaled dot-product attention
-        scale = 1.0 / math.sqrt(self.head_dim)
-        attn = (q @ k.transpose(-2, -1)) * scale  # (B, n_heads, T, T)
+        # Flash Attention: fused kernel, no T×T matrix in memory, causal mask built-in
+        # dropout_p is only applied during training
+        out = F.scaled_dot_product_attention(
+            q, k, v,
+            dropout_p=self.dropout if self.training else 0.0,
+            is_causal=True,
+        )  # (B, n_heads, T, head_dim)
 
-        # Apply causal mask: set future positions to -inf
-        attn = attn.masked_fill(self.causal_mask[:, :, :T, :T] == 0, float("-inf"))
-
-        attn = F.softmax(attn, dim=-1)
-        attn = self.attn_dropout(attn)
-
-        # Aggregate values
-        out = attn @ v  # (B, n_heads, T, head_dim)
-
-        # Concatenate heads
+        # Concatenate heads: (B, T, n_embd)
         out = out.transpose(1, 2).contiguous().view(B, T, C)
 
         # Output projection

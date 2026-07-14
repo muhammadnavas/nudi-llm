@@ -82,8 +82,12 @@ def create_dataloaders(
     tokenizer_path: str,
     context_length: int = 256,
     batch_size: int = 8,
-    num_workers: int = 0,  # 0 for Windows compatibility
+    num_workers: int = -1,  # -1 = auto-detect (2 on Linux/Colab, 0 on Windows)
 ):
+    import platform
+    if num_workers == -1:
+        # Colab / Linux benefits from parallel workers; Windows does not
+        num_workers = 2 if platform.system() != "Windows" else 0
     """Create train and validation DataLoaders."""
     train_dataset = KannadaDataset(
         data_path="data/processed/train.txt",

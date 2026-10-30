@@ -208,6 +208,13 @@ def visualize_generation(req: VisualizeRequest):
                         top_probs.tolist(), top_ids.tolist()
                     )
                 ]
+                # Always show the sampled token, even when it falls outside top five.
+                if all(candidate["id"] != token_id for candidate in candidate_list):
+                    candidate_list.append({
+                        **detail,
+                        "probability": float(probabilities[0, token_id].item()),
+                    })
+                candidate_list.sort(key=lambda candidate: candidate["probability"], reverse=True)
 
                 steps.append({
                     "index": index + 1,

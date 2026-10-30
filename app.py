@@ -187,7 +187,7 @@ async def visualize_generation(req: VisualizeRequest):
                     )
                     sorted_probs = F.softmax(sorted_logits, dim=-1)
                     cumulative_probs = torch.cumsum(sorted_probs, dim=-1)
-                    remove = cumulative_probs - sorted_probs >= req.top_p
+                    remove = cumulative_probs - sorted_probs > req.top_p
                     sorted_logits = sorted_logits.masked_fill(remove, float("-inf"))
                     filtered_logits = torch.full_like(next_logits, float("-inf"))
                     next_logits = filtered_logits.scatter(1, sorted_indices, sorted_logits)

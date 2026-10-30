@@ -36,7 +36,7 @@ function renderNetwork(model) {
     { label: "Embeddings", x: 205, count: 5 },
     ...Array.from({length: Math.min(model.layers, 4)}, (_, i) => ({
       label: i === Math.min(model.layers, 4) - 1 && model.layers > 4 ? "Layer " + model.layers : "Layer " + (i + 1),
-      x: 350 + i * 105, count: 5
+      x: 320 + i * 85, count: 5
     })),
     { label: "Logits", x: 700, count: 5 }
   ];
@@ -150,14 +150,9 @@ async function playTrace(data) {
     $("decode-piece").textContent = step.selected.is_eos ? "<end>" : (step.selected.text || step.selected.piece || " ");
     await sleep(280);
     generatedIds.push(step.selected.id);
-    response.textContent = data.generated_text.slice(0, data.generated_text.length);
-    // Decode the exact prefix supplied by the server to avoid client-side tokenizer differences.
-    response.textContent = data.steps.slice(0, index + 1)
-      .filter(item => !item.is_eos)
-      .map(item => item.selected.text)
-      .join("");
-    // SentencePiece pieces can include boundary markers; final response is authoritative.
-    if (index === data.steps.length - 1) response.textContent = data.generated_text;
+    // Use the exact decoded prefix from the backend; individual SentencePiece pieces
+    // are not always independently decodable into the same concatenated string.
+    response.textContent = step.cumulative_text || data.generated_text;
     setActiveStage("stage-response");
     const pct = ((index + 1) / Math.max(1, data.steps.length)) * 100;
     $("progress-fill").style.width = pct + "%";

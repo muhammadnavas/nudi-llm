@@ -218,6 +218,7 @@ async def visualize_generation(req: VisualizeRequest):
                 })
 
                 generated_ids.append(token_id)
+                steps[-1]["cumulative_text"] = TOKENIZER.decode(generated_ids)
                 input_ids = torch.cat([input_ids, sampled], dim=1)
                 if token_id == model.config.eos_id:
                     break

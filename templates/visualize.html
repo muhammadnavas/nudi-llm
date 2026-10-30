@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#0b1224">
+  <title>How NudiLLM Thinks · NudiLLM</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/visualize.css">
+</head>
+<body>
+  <main class="page">
+    <header class="topbar">
+      <a class="brand" href="/"><span class="brand-mark">ನು</span><span>NudiLLM <small>LAB</small></span></a>
+      <a class="back-link" href="/">← Back to chat</a>
+    </header>
+
+    <section class="hero">
+      <div class="eyebrow"><span class="pulse"></span> INTERACTIVE MODEL EXPLORER</div>
+      <h1>See how <span>NudiLLM</span> generates text.</h1>
+      <p>Follow a real generation run through tokenization, Transformer inference, probability sampling and decoding.</p>
+    </section>
+
+    <section class="control-panel">
+      <form id="visualize-form">
+        <label for="prompt">YOUR PROMPT</label>
+        <textarea id="prompt" rows="2" placeholder="ಕನ್ನಡ ಭಾಷೆಯ ಬಗ್ಗೆ ಹೇಳಿ..." required>ಕನ್ನಡ ಭಾಷೆಯ ಬಗ್ಗೆ ಹೇಳಿ</textarea>
+        <div class="controls">
+          <label class="mode-control">Model mode
+            <select id="mode"><option value="chat">Instruction / chat</option><option value="base">Base completion</option></select>
+          </label>
+          <label class="mode-control">Tokens
+            <select id="max-tokens"><option>12</option><option selected>24</option><option>40</option><option>64</option></select>
+          </label>
+          <label class="mode-control">Temperature
+            <select id="temperature"><option value="0.3">0.3 · focused</option><option value="0.8" selected>0.8 · balanced</option><option value="1.2">1.2 · creative</option></select>
+          </label>
+          <button id="run-btn" type="submit"><span>▶</span> Visualize generation</button>
+        </div>
+      </form>
+      <div id="status" class="status" aria-live="polite">Enter a prompt and run NudiLLM to inspect its real token predictions.</div>
+    </section>
+
+    <section id="results" class="results" hidden>
+      <div class="run-summary">
+        <div><span class="eyebrow">MODEL</span><strong id="model-summary">NudiLLM</strong></div>
+        <div><span class="eyebrow">PROMPT TOKENS</span><strong id="prompt-count">—</strong></div>
+        <div><span class="eyebrow">GENERATED TOKENS</span><strong id="generated-count">—</strong></div>
+        <div><span class="eyebrow">PARAMETERS</span><strong id="parameter-count">—</strong></div>
+      </div>
+
+      <div class="playback">
+        <div class="playback-top"><span id="playback-label">Generation trace</span><span id="step-count">0 / 0</span></div>
+        <div class="progress-track"><div id="progress-fill"></div></div>
+        <div class="playback-actions">
+          <button id="replay-btn" class="secondary-btn" type="button">↻ Replay</button>
+          <span>Each step is one actual model prediction</span>
+        </div>
+      </div>
+
+      <section class="stage active" id="stage-tokenizer">
+        <div class="stage-heading"><span class="stage-number blue">01</span><div><h2>Tokenizer</h2><p>SentencePiece splits the prompt into subword pieces.</p></div><span class="stage-state">PROMPT</span></div>
+        <div id="token-chips" class="token-chips"></div>
+      </section>
+
+      <section class="stage" id="stage-ids">
+        <div class="stage-heading"><span class="stage-number violet">02</span><div><h2>Token IDs</h2><p>Every token maps to an integer in the learned vocabulary.</p></div></div>
+        <div id="token-ids" class="token-ids"></div>
+      </section>
+
+      <section class="stage" id="stage-transformer">
+        <div class="stage-heading"><span class="stage-number orange">03</span><div><h2>Transformer neural network</h2><p>Token and position embeddings pass through causal self-attention and feed-forward blocks.</p></div></div>
+        <div class="network-wrap">
+          <svg id="network" viewBox="0 0 760 260" role="img" aria-label="Schematic of NudiLLM Transformer layers"></svg>
+          <div class="network-meta" id="network-meta"></div>
+        </div>
+        <p class="fine-print">Architecture schematic, not a visualization of individual learned weights or attention values. The prediction scores below come from the actual model forward pass.</p>
+      </section>
+
+      <section class="stage" id="stage-softmax">
+        <div class="stage-heading"><span class="stage-number green">04</span><div><h2>Softmax: next-token probabilities</h2><p>Scores are converted into the sampling probabilities after temperature and filtering.</p></div></div>
+        <div id="candidate-list" class="candidate-list"><div class="empty-state">Waiting for the first prediction…</div></div>
+      </section>
+
+      <section class="stage" id="stage-decode">
+        <div class="stage-heading"><span class="stage-number pink">05</span><div><h2>Detokenizer</h2><p>The selected token ID is converted back into readable text.</p></div></div>
+        <div class="decode-panel"><span id="decode-id">ID —</span><span class="decode-arrow">→</span><strong id="decode-piece">Waiting…</strong></div>
+      </section>
+
+      <section class="stage" id="stage-response">
+        <div class="stage-heading"><span class="stage-number yellow">06</span><div><h2>Response, one token at a time</h2><p>The selected token is appended to the context and the model predicts again.</p></div></div>
+        <div class="response-panel"><span id="response-text">Your generated response will appear here…</span><span class="cursor"></span></div>
+        <div id="completion-note" class="completion-note"></div>
+      </section>
+    </section>
+    <footer>NUDILLM · BUILT FROM SCRATCH FOR KANNADA</footer>
+  </main>
+  <script src="/static/visualize.js"></script>
+</body>
+</html>

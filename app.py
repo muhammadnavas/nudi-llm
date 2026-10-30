@@ -122,7 +122,7 @@ def _token_details(token_id: int):
 
 
 @app.post("/api/visualize")
-async def visualize_generation(req: VisualizeRequest):
+def visualize_generation(req: VisualizeRequest):
     """Return an auditable, token-by-token trace from the real NudiLLM model."""
     if TOKENIZER is None:
         raise HTTPException(status_code=503, detail="Tokenizer is not loaded.")

@@ -52,7 +52,7 @@ python train.py
 ```bash
 python app.py
 ```
-*Open `http://localhost:5000` in your browser.*
+*Open `http://localhost:7860` in your browser.*
 
 ### Step 6: Explore token-by-token generation
 ```bash

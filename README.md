@@ -54,7 +54,15 @@ python app.py
 ```
 *Open `http://localhost:5000` in your browser.*
 
-### Step 6: Generate Kannada text (CLI)
+### Step 6: Explore token-by-token generation
+```bash
+python app.py
+```
+Open `http://localhost:7860/visualize` to inspect the real generation trace. The visualizer shows SentencePiece tokens and IDs, the model architecture, filtered next-token probabilities, selected token IDs, detokenized output, and the response as it is generated.
+
+API: `POST /api/visualize` with `prompt`, `use_chat_format`, `max_new_tokens` (1–80), `temperature`, `top_k`, `top_p`, `repetition_penalty`, and optional `seed`.
+
+### Step 7: Generate Kannada text (CLI)
 ```bash
 python inference.py --prompt "ಕನ್ನಡ ಭಾಷೆ"
 ```

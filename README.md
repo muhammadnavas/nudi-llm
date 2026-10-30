@@ -62,7 +62,7 @@ Open `http://localhost:7860/visualize` to inspect the real generation trace. The
 
 API: `POST /api/visualize` with `prompt`, `use_chat_format`, `max_new_tokens` (1–80), `temperature`, `top_k`, `top_p`, `repetition_penalty`, and optional `seed`.
 
-### Step 6: Generate Kannada text (CLI)
+### Step 7: Generate Kannada text (CLI)
 ```bash
 python inference.py --prompt "ಕನ್ನಡ ಭಾಷೆ"
 ```

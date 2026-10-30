@@ -28,7 +28,32 @@ def load_model(checkpoint_path: str, device: str):
 
     model_config = NudiConfig(**cfg_dict)
     model = NudiLLM(model_config).to(device)
-    model.load_state_dict(ckpt["model"])
+
+    # Older checkpoints saved an explicit causal attention mask buffer.
+    # The current implementation uses scaled_dot_product_attention(is_causal=True),
+    # so these buffers are obsolete and must not be loaded as model parameters.
+    state_dict = ckpt.get("model")
+    if not isinstance(state_dict, dict):
+        raise ValueError(
+            f"Invalid checkpoint at {checkpoint_path}: expected a 'model' state dict."
+        )
+
+    obsolete_keys = [
+        key for key in state_dict
+        if key.endswith(".causal_mask")
+    ]
+    if obsolete_keys:
+        state_dict = {
+            key: value for key, value in state_dict.items()
+            if not key.endswith(".causal_mask")
+        }
+        print(
+            "Ignoring obsolete causal-mask buffers from legacy checkpoint: "
+            + ", ".join(obsolete_keys)
+        )
+
+    # Keep strict=True: missing or unexpected learned parameters must still fail.
+    model.load_state_dict(state_dict, strict=True)
     model.eval()
 
     params = model.count_parameters()

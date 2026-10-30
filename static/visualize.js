@@ -136,7 +136,6 @@ async function playTrace(data) {
   setActiveStage("stage-transformer");
   if (!(await wait(450))) return;
 
-  const generatedIds = [];
   for (let index = 0; index < data.steps.length; index++) {
     const step = data.steps[index];
     setActiveStage("stage-transformer");
@@ -149,7 +148,6 @@ async function playTrace(data) {
     $("decode-id").textContent = "ID " + step.selected.id;
     $("decode-piece").textContent = step.is_eos ? "<end>" : (step.selected.text || step.selected.piece || " ");
     if (!(await wait(280))) return;
-    generatedIds.push(step.selected.id);
     const tokenChip = document.createElement("span");
     tokenChip.className = "token-chip";
     tokenChip.textContent = step.is_eos ? "<end>" : step.selected.piece;

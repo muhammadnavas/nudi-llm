@@ -4,10 +4,8 @@ const runButton = $("run-btn");
 const statusLine = $("status");
 const results = $("results");
 let traceData = null;
-let playbackTimer = null;
+let playbackRunId = 0;
 
-const sleep = (ms) => new Promise(resolve => { playbackTimer = setTimeout(resolve, ms); });
-const formatNumber = (value) => Number(value).toLocaleString("en-US");
 const escapeHTML = (value) => String(value).replace(/[&<>'"]/g, char => ({
   "&": "&amp;", "<": "&lt;", ">": "&gt;", "'": "&#39;", '"': "&quot;"
 }[char]));
@@ -110,7 +108,8 @@ function showSummary(data) {
 }
 
 async function playTrace(data) {
-  if (playbackTimer) clearTimeout(playbackTimer);
+  const runId = ++playbackRunId;
+  const wait = (ms) => new Promise(resolve => setTimeout(resolve, ms)).then(() => runId === playbackRunId);
   const ids = $("token-ids");
   const response = $("response-text");
   const promptIds = data.tokenizer.prompt_tokens;
@@ -121,6 +120,7 @@ async function playTrace(data) {
     chip.textContent = token.id;
     ids.appendChild(chip);
   });
+  renderTokens(promptIds, $("token-chips"), "token-chip");
   response.textContent = "";
   $("decode-id").textContent = "ID —";
   $("decode-piece").textContent = "Waiting…";
@@ -130,25 +130,25 @@ async function playTrace(data) {
   $("step-count").textContent = "0 / " + data.steps.length;
   $("playback-label").textContent = "Generation trace";
   setActiveStage("stage-tokenizer");
-  await sleep(450);
+  if (!(await wait(450))) return;
   setActiveStage("stage-ids");
-  await sleep(450);
+  if (!(await wait(450))) return;
   setActiveStage("stage-transformer");
-  await sleep(450);
+  if (!(await wait(450))) return;
 
   const generatedIds = [];
   for (let index = 0; index < data.steps.length; index++) {
     const step = data.steps[index];
     setActiveStage("stage-transformer");
     $("playback-label").textContent = "Forward pass · token " + step.index;
-    await sleep(220);
+    if (!(await wait(220))) return;
     setActiveStage("stage-softmax");
     renderCandidates(step.candidates, step.selected.id);
-    await sleep(430);
+    if (!(await wait(430))) return;
     setActiveStage("stage-decode");
     $("decode-id").textContent = "ID " + step.selected.id;
     $("decode-piece").textContent = step.is_eos ? "<end>" : (step.selected.text || step.selected.piece || " ");
-    await sleep(280);
+    if (!(await wait(280))) return;
     generatedIds.push(step.selected.id);
     const tokenChip = document.createElement("span");
     tokenChip.className = "token-chip";
@@ -166,7 +166,7 @@ async function playTrace(data) {
     chip.className = "id-chip generated-chip";
     chip.textContent = step.selected.id;
     ids.appendChild(chip);
-    await sleep(480);
+    if (!(await wait(480))) return;
   }
   setActiveStage("stage-response");
   $("playback-label").textContent = "Generation complete";
@@ -182,7 +182,7 @@ async function runVisualization() {
     statusLine.textContent = "Please enter a prompt first.";
     return;
   }
-  if (playbackTimer) clearTimeout(playbackTimer);
+  playbackRunId += 1;
   runButton.disabled = true;
   runButton.textContent = "Running model…";
   statusLine.textContent = "Calling NudiLLM and collecting its actual next-token distributions…";

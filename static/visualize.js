@@ -147,9 +147,13 @@ async function playTrace(data) {
     await sleep(430);
     setActiveStage("stage-decode");
     $("decode-id").textContent = "ID " + step.selected.id;
-    $("decode-piece").textContent = step.selected.is_eos ? "<end>" : (step.selected.text || step.selected.piece || " ");
+    $("decode-piece").textContent = step.is_eos ? "<end>" : (step.selected.text || step.selected.piece || " ");
     await sleep(280);
     generatedIds.push(step.selected.id);
+    const tokenChip = document.createElement("span");
+    tokenChip.className = "token-chip";
+    tokenChip.textContent = step.is_eos ? "<end>" : step.selected.piece;
+    $("token-chips").appendChild(tokenChip);
     // Use the exact decoded prefix from the backend; individual SentencePiece pieces
     // are not always independently decodable into the same concatenated string.
     response.textContent = step.cumulative_text || data.generated_text;

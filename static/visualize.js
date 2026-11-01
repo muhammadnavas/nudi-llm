@@ -1,3 +1,20 @@
+function dismissLoader() {
+  const loader = document.getElementById('loader-wrapper');
+  if (loader) {
+    loader.classList.add('hidden');
+    setTimeout(() => {
+      if (loader && loader.parentNode) loader.remove();
+    }, 400);
+  }
+}
+if (document.readyState === 'complete' || document.readyState === 'interactive') {
+  setTimeout(dismissLoader, 400);
+} else {
+  document.addEventListener('DOMContentLoaded', () => setTimeout(dismissLoader, 400));
+  window.addEventListener('load', () => setTimeout(dismissLoader, 400));
+}
+setTimeout(dismissLoader, 800);
+
 const $ = (id) => document.getElementById(id);
 const form = $("visualize-form");
 const runButton = $("run-btn");
@@ -52,15 +69,16 @@ function renderNetwork(model) {
   };
   for (let col = 0; col < positions.length - 1; col++) {
     positions[col].forEach((from, i) => positions[col + 1].forEach((to, j) => {
-      add("line", {x1:from.x+7,y1:from.y,x2:to.x-7,y2:to.y,stroke:"#526985","stroke-opacity":".24","stroke-width":"1"});
+      add("line", {x1:from.x+7,y1:from.y,x2:to.x-7,y2:to.y,stroke:"rgba(139, 92, 246, 0.22)","stroke-opacity":".8","stroke-width":"1"});
     }));
   }
   positions.forEach((column, colIndex) => {
     column.forEach(point => add("circle", {
-      cx:point.x,cy:point.y,r:6.5,fill:colIndex === 0 ? "#56a2ff" : colIndex === positions.length-1 ? "#3bd4a5" : "#6c83a2",
-      stroke:"#b4c7df","stroke-opacity":".35","stroke-width":"1"
+      cx:point.x,cy:point.y,r:6.5,
+      fill:colIndex === 0 ? "#8b5cf6" : colIndex === positions.length-1 ? "#10b981" : "#a78bfa",
+      stroke:"rgba(255, 255, 255, 0.5)","stroke-opacity":".5","stroke-width":"1.5"
     }));
-    add("text",{x:column[0].x,y:244,fill:"#91a2bb","font-size":"10","text-anchor":"middle"},columns[colIndex].label);
+    add("text",{x:column[0].x,y:244,fill:"#9d9db5","font-size":"11","text-anchor":"middle","font-family":"Inter, sans-serif"},columns[colIndex].label);
   });
 }
 function renderCandidates(candidates, selectedId) {

@@ -1,18 +1,15 @@
 """
 NudiLLM - Step 3: Training Script
-Trains the mini Kannada GPT on your GTX 1650 (4GB VRAM) or Google Colab.
+Trains the mini Kannada GPT on your GTX 1650 (4GB VRAM).
 
 Estimated training time:
   - GTX 1650 (4GB): ~2-5 hours for 3 epochs on Kannada Wikipedia
-  - Colab T4 (16GB): ~30-60 minutes for 3 epochs
-  - Colab A100 (40GB): ~10-20 minutes for 3 epochs
-  - CPU only:         ~3-7 days (not recommended)
+  - CPU only:       ~3-7 days (not recommended)
 
 Usage:
-  python train.py                  # Default config (local GPU)
+  python train.py                  # Default config
   python train.py --epochs 5       # More epochs
   python train.py --resume         # Resume from checkpoint
-  python train.py --colab          # Colab mode (Drive-backed paths + larger config)
 """
 
 import os
@@ -42,81 +39,39 @@ TOKENIZER_PATH = "tokenizer/kannada_bpe.model"
 
 
 # ── Training Config ────────────────────────────────────────────────────────────
-def get_train_config(colab: bool = False):
-    device = "cuda" if torch.cuda.is_available() else "cpu"
+def get_train_config():
+    return {
+        "vocab_size": 8000,
+        "context_length": 512,     # ↑ 256→512: Flash Attention frees enough VRAM
+        "n_embd": 384,
+        "n_heads": 6,
+        "n_layers": 6,
+        "dropout": 0.05,           # ↓ 0.1→0.05: less aggressive regularization
 
-    # Detect BF16 support (A100 / newer Ampere GPUs on Colab Pro)
-    supports_bf16 = (
-        device == "cuda"
-        and torch.cuda.is_bf16_supported()
-    )
+        # Training
+        # batch_size reduced 8→6 to offset the larger context window.
+        # Effective batch = batch_size × ACCUM_STEPS = 6×4 = 24  (defined below)
+        "batch_size": 6,
+        "num_epochs": 3,
+        "learning_rate": 1e-4,     # ↓ 3e-4→1e-4: more stable for longer sequences
+        "weight_decay": 0.1,
+        "grad_clip": 1.0,          # Gradient clipping
+        "warmup_steps": 500,       # ↑ 200→500: smoother warmup for lower LR
 
-    if colab:
-        # ── Colab T4 (16 GB) / A100 (40 GB) config ──────────────────────────
-        # T4 has 4× the VRAM of a GTX 1650, so we can use a larger model and
-        # bigger batches. A100 can go even higher, but these settings are safe
-        # for both T4 and A100.
-        return {
-            "vocab_size": 8000,
-            "context_length": 1024,    # 2× larger context
-            "n_embd": 512,             # wider embeddings
-            "n_heads": 8,
-            "n_layers": 8,             # deeper model
-            "dropout": 0.05,
+        # Evaluation
+        "eval_interval": 500,      # Evaluate every N steps
+        "eval_steps": 50,          # Steps to average for val loss
+        "save_interval": 1000,     # Save checkpoint every N steps
 
-            # Training
-            "batch_size": 16,          # T4 can handle 16 comfortably
-            "num_epochs": 3,
-            "learning_rate": 1e-4,
-            "weight_decay": 0.1,
-            "grad_clip": 1.0,
-            "warmup_steps": 500,
-
-            # Evaluation
-            "eval_interval": 500,
-            "eval_steps": 50,
-            "save_interval": 500,      # Save more often to survive session drops
-
-            # Device
-            "device": device,
-            "bf16": supports_bf16,     # BF16 on A100 (better than FP16)
-            "fp16": not supports_bf16, # FP16 on T4 (no BF16 support)
-        }
-    else:
-        # ── Local GTX 1650 (4 GB) config ─────────────────────────────────────
-        return {
-            "vocab_size": 8000,
-            "context_length": 512,     # ↑ 256→512: Flash Attention frees enough VRAM
-            "n_embd": 384,
-            "n_heads": 6,
-            "n_layers": 6,
-            "dropout": 0.05,           # ↓ 0.1→0.05: less aggressive regularization
-
-            # Training
-            # batch_size reduced 8→6 to offset the larger context window.
-            # Effective batch = batch_size × ACCUM_STEPS = 6×4 = 24  (defined below)
-            "batch_size": 6,
-            "num_epochs": 3,
-            "learning_rate": 1e-4,     # ↓ 3e-4→1e-4: more stable for longer sequences
-            "weight_decay": 0.1,
-            "grad_clip": 1.0,          # Gradient clipping
-            "warmup_steps": 500,       # ↑ 200→500: smoother warmup for lower LR
-
-            # Evaluation
-            "eval_interval": 500,      # Evaluate every N steps
-            "eval_steps": 50,          # Steps to average for val loss
-            "save_interval": 1000,     # Save checkpoint every N steps
-
-            # Device
-            "device": device,
-            "bf16": False,             # GTX 1650 Turing has no BF16
-            "fp16": True,              # FP16 on GTX 1650
-        }
+        # Device
+        "device": "cuda" if torch.cuda.is_available() else "cpu",
+        "fp16": True,              # FP16 on GTX 1650 (no BF16 support)
+    }
 
 
 # Gradient accumulation steps.
-# Local:  effective batch = 6  × 4 = 24
-# Colab:  effective batch = 16 × 2 = 32  (set per-run inside train())
+# Effective batch = batch_size × ACCUM_STEPS = 6 × 4 = 24
+# Same VRAM as batch_size=6, but smoother gradients → better convergence.
 ACCUM_STEPS = 4
 
 
@@ -170,26 +125,17 @@ def evaluate(model, val_loader, config, scaler=None):
 
 
 # ── Training Loop ──────────────────────────────────────────────────────────────
-def train(resume: bool = False, extra_epochs: int = 0, version: str = "v1", colab: bool = False):
+def train(resume: bool = False, extra_epochs: int = 0, version: str = "v1"):
     # ── Versioned output directories ───────────────────────────────────────────
-    if colab:
-        # Save to Google Drive so checkpoints survive session resets
-        drive_root = Path("/content/drive/MyDrive/NudiLLM")
-        checkpoint_dir = drive_root / "checkpoints" / version
-        log_dir = drive_root / "logs" / version
-    else:
-        checkpoint_dir = Path("checkpoints") / version
-        log_dir = Path("logs") / version
-
+    checkpoint_dir = Path("checkpoints") / version
+    log_dir = Path("logs") / version
     checkpoint_dir.mkdir(parents=True, exist_ok=True)
     log_dir.mkdir(parents=True, exist_ok=True)
     print(f"[Version] {version}")
     print(f"   Checkpoints : {checkpoint_dir}")
     print(f"   Logs        : {log_dir}")
-    if colab:
-        print("   [Colab] Checkpoints are saved to Google Drive")
 
-    config = get_train_config(colab=colab)
+    config = get_train_config()
     device = config["device"]
 
     print("=" * 60)
@@ -200,11 +146,9 @@ def train(resume: bool = False, extra_epochs: int = 0, version: str = "v1", cola
         gpu_name = torch.cuda.get_device_name(0)
         vram = torch.cuda.get_device_properties(0).total_memory / 1024**3
         print(f"   GPU   : {gpu_name} ({vram:.1f} GB VRAM)")
-    print(f"   BF16  : {config['bf16']}")
     print(f"   FP16  : {config['fp16']}")
     print(f"   Batch : {config['batch_size']}")
     print(f"   Seq   : {config['context_length']}")
-    print(f"   Colab : {colab}")
     print()
 
     # Check tokenizer
@@ -249,9 +193,8 @@ def train(resume: bool = False, extra_epochs: int = 0, version: str = "v1", cola
         eps=1e-8,
     )
 
-    # Gradient Scaler — used for FP16 training. BF16 does not need a scaler.
-    use_scaler = config["fp16"] and device == "cuda" and not config["bf16"]
-    scaler = GradScaler("cuda", enabled=use_scaler)
+    # FP16 Gradient Scaler (GTX 1650 doesn't support BF16)
+    scaler = GradScaler("cuda", enabled=(config["fp16"] and device == "cuda"))
 
     # ── Resume from Checkpoint ─────────────────────────────────────────────────
     start_epoch = 0
@@ -275,12 +218,8 @@ def train(resume: bool = False, extra_epochs: int = 0, version: str = "v1", cola
         print(f"   Resumed at epoch {start_epoch}, step {global_step}")
 
     total_epochs = config["num_epochs"] + extra_epochs
-
-    # On Colab we can afford fewer accumulation steps because batch_size is already large.
-    accum_steps = 2 if colab else ACCUM_STEPS
-
-    # steps_per_epoch = optimizer steps per epoch (each step = accum_steps micro-batches)
-    steps_per_epoch = len(train_loader) // accum_steps
+    # steps_per_epoch = optimizer steps per epoch (each step = ACCUM_STEPS micro-batches)
+    steps_per_epoch = len(train_loader) // ACCUM_STEPS
     total_steps = total_epochs * steps_per_epoch
     config["total_steps"] = total_steps
 
@@ -289,7 +228,7 @@ def train(resume: bool = False, extra_epochs: int = 0, version: str = "v1", cola
     print(f"   Epochs         : {total_epochs}")
     print(f"   Steps/epoch    : {steps_per_epoch:,}")
     print(f"   Total steps    : {total_steps:,}")
-    print(f"   Accum steps    : {accum_steps}  (effective batch = {config['batch_size'] * accum_steps})")
+    print(f"   Accum steps    : {ACCUM_STEPS}  (effective batch = {config['batch_size'] * ACCUM_STEPS})")
     print(f"   Eval every     : {config['eval_interval']} steps")
     print(f"   Save every     : {config['save_interval']} steps")
     print()
@@ -313,21 +252,13 @@ def train(resume: bool = False, extra_epochs: int = 0, version: str = "v1", cola
                 param_group["lr"] = lr
 
             # ── Gradient Accumulation ───────────────────────────────────────
-            # Accumulate accum_steps micro-batches before updating weights.
-            # Each micro-batch contributes loss / accum_steps so the total
-            # gradient magnitude equals that of a single batch_size×accum_steps batch.
+            # Accumulate ACCUM_STEPS micro-batches before updating weights.
+            # Each micro-batch contributes loss / ACCUM_STEPS so the total
+            # gradient magnitude equals that of a single batch_size×ACCUM_STEPS batch.
             optimizer.zero_grad(set_to_none=True)
             accum_loss = 0.0
 
-            # Determine autocast dtype: BF16 on A100, FP16 on T4/GTX 1650
-            if config["bf16"] and device == "cuda":
-                amp_dtype = torch.bfloat16
-            elif config["fp16"] and device == "cuda":
-                amp_dtype = torch.float16
-            else:
-                amp_dtype = None
-
-            for micro_step in range(accum_steps):
+            for micro_step in range(ACCUM_STEPS):
                 try:
                     x, y = next(train_iter)
                 except StopIteration:
@@ -336,24 +267,21 @@ def train(resume: bool = False, extra_epochs: int = 0, version: str = "v1", cola
 
                 x, y = x.to(device), y.to(device)
 
-                if amp_dtype is not None:
-                    with autocast("cuda", dtype=amp_dtype):
+                if config["fp16"] and device == "cuda":
+                    with autocast("cuda", dtype=torch.float16):
                         _, loss = model(x, y)
-                    # Divide by accum_steps so gradients average over micro-batches
-                    loss = loss / accum_steps
+                    # Divide by ACCUM_STEPS so gradients average over micro-batches
+                    loss = loss / ACCUM_STEPS
                     scaler.scale(loss).backward()
                 else:
                     _, loss = model(x, y)
-                    loss = loss / accum_steps
+                    loss = loss / ACCUM_STEPS
                     loss.backward()
 
                 accum_loss += loss.item()
-                steps_this_epoch += 1
-                if steps_this_epoch >= steps_per_epoch:
-                    break  # don't overshoot the epoch boundary
 
-            # ── Optimizer step (once per accum_steps micro-batches) ─────────
-            if use_scaler:
+            # ── Optimizer step (once per ACCUM_STEPS micro-batches) ─────────
+            if config["fp16"] and device == "cuda":
                 scaler.unscale_(optimizer)
                 nn.utils.clip_grad_norm_(model.parameters(), config["grad_clip"])
                 scaler.step(optimizer)
@@ -362,10 +290,11 @@ def train(resume: bool = False, extra_epochs: int = 0, version: str = "v1", cola
                 nn.utils.clip_grad_norm_(model.parameters(), config["grad_clip"])
                 optimizer.step()
 
-            # accum_loss is already divided — multiply back for readable logging
-            step_loss = accum_loss * accum_steps
+            # accum_loss is already averaged over ACCUM_STEPS — use directly
+            step_loss = accum_loss
             epoch_loss += step_loss
             global_step += 1
+            steps_this_epoch += 1  # count optimizer steps, not micro-steps
 
             # ── Logging ────────────────────────────────────────────────────────────
             if global_step % 50 == 0:
@@ -451,20 +380,14 @@ if __name__ == "__main__":
     parser.add_argument("--version", type=str, default="v1",
                         help="Training version tag (e.g. v1, v2). "
                              "Checkpoints saved to checkpoints/<version>/")
-    parser.add_argument("--colab", action="store_true",
-                        help="Colab mode: larger config + checkpoints saved to "
-                             "/content/drive/MyDrive/NudiLLM/")
     args = parser.parse_args()
 
     if not torch.cuda.is_available():
         print("⚠️  WARNING: CUDA not available. Training on CPU will be very slow.")
-        if args.colab:
-            print("   In Colab: Runtime → Change runtime type → GPU (T4)")
-        else:
-            print("   Make sure CUDA drivers and PyTorch CUDA are installed.")
-            print("   Install: pip install torch --index-url https://download.pytorch.org/whl/cu121")
+        print("   Make sure CUDA drivers and PyTorch CUDA are installed.")
+        print("   Install: pip install torch --index-url https://download.pytorch.org/whl/cu121")
         ans = input("\nContinue on CPU anyway? (y/N): ")
         if ans.lower() != "y":
             sys.exit(0)
 
-    train(resume=args.resume, extra_epochs=args.epochs, version=args.version, colab=args.colab)
+    train(resume=args.resume, extra_epochs=args.epochs, version=args.version)

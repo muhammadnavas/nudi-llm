@@ -256,21 +256,25 @@ function initColorBends(container, options = {}) {
 // Auto-initialize if container exists
 document.addEventListener('DOMContentLoaded', () => {
     const container = document.getElementById('color-bends-container');
-    if (container) {
-        initColorBends(container, {
-            colors: ["#7c3aed", "#a855f7", "#ec4899", "#6d28d9"],
-            rotation: 90,
-            speed: 0.15,
-            scale: 1.1,
-            frequency: 0.9,
-            warpStrength: 1.2,
-            mouseInfluence: 0.8,
-            noise: 0.08,
-            parallax: 0.4,
-            iterations: 2,
-            intensity: 1.2,
-            bandWidth: 5,
-            transparent: true
-        });
+    if (container && typeof THREE !== 'undefined') {
+        try {
+            initColorBends(container, {
+                colors: ["#7c3aed", "#a855f7", "#ec4899", "#6d28d9"],
+                rotation: 90,
+                speed: 0.15,
+                scale: 1.1,
+                frequency: 0.9,
+                warpStrength: 1.2,
+                mouseInfluence: 0.8,
+                noise: 0.08,
+                parallax: 0.4,
+                iterations: 2,
+                intensity: 1.2,
+                bandWidth: 5,
+                transparent: true
+            });
+        } catch (e) {
+            console.warn('ColorBends initialization failed:', e);
+        }
     }
 });

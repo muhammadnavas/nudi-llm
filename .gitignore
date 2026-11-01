@@ -9,10 +9,8 @@ env/
 .env
 
 # Datasets and Processed files
-# (GitHub has file size limits — ignore raw/processed data but keep scripts)
-data/raw/
-data/processed/
-data/instruct_kannada.json
+# (GitHub has file size limits, so we exclude the huge text and binary files)
+data/
 *.npy
 
 # Model Checkpoints

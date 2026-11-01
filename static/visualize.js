@@ -148,24 +148,24 @@ async function playTrace(data) {
   $("step-count").textContent = "0 / " + data.steps.length;
   $("playback-label").textContent = "Generation trace";
   setActiveStage("stage-tokenizer");
-  if (!(await wait(450))) return;
+  if (!(await wait(600))) return;
   setActiveStage("stage-ids");
-  if (!(await wait(450))) return;
+  if (!(await wait(600))) return;
   setActiveStage("stage-transformer");
-  if (!(await wait(450))) return;
+  if (!(await wait(600))) return;
 
   for (let index = 0; index < data.steps.length; index++) {
     const step = data.steps[index];
     setActiveStage("stage-transformer");
     $("playback-label").textContent = "Forward pass · token " + step.index;
-    if (!(await wait(220))) return;
+    if (!(await wait(450))) return;
     setActiveStage("stage-softmax");
     renderCandidates(step.candidates, step.selected.id);
-    if (!(await wait(430))) return;
+    if (!(await wait(750))) return;
     setActiveStage("stage-decode");
     $("decode-id").textContent = "ID " + step.selected.id;
     $("decode-piece").textContent = step.is_eos ? "<end>" : (step.selected.text || step.selected.piece || " ");
-    if (!(await wait(280))) return;
+    if (!(await wait(500))) return;
     const tokenChip = document.createElement("span");
     tokenChip.className = "token-chip";
     tokenChip.textContent = step.is_eos ? "<end>" : step.selected.piece;
@@ -182,7 +182,7 @@ async function playTrace(data) {
     chip.className = "id-chip generated-chip";
     chip.textContent = step.selected.id;
     ids.appendChild(chip);
-    if (!(await wait(480))) return;
+    if (!(await wait(750))) return;
   }
   setActiveStage("stage-response");
   $("playback-label").textContent = "Generation complete";
